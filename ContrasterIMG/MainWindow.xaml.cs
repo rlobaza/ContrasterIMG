@@ -2,6 +2,8 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -18,11 +20,91 @@ namespace ContrasterIMG
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+
     public partial class MainWindow : Window
     {
+        AppConfigManager config_manager = new AppConfigManager();
+
         public MainWindow()
         {
             InitializeComponent();
+            Config_Load();
+        }
+
+        public void Config_Change(object sender, RoutedEventArgs e)
+        {
+            config_manager.UpdateConfigOutputDir(OutputPathTextBox.Text);
+
+            if (sender is RadioButton button)
+            {
+                config_manager.UpdateConfigSettings(button.Name.ToString());
+            }
+
+            config_manager.SaveConfig();
+        }
+
+        private void Config_Load()
+        {
+            config_manager.LoadConfig();
+            ////////////////////////////////////////////////////////////////////////
+            if (config_manager.Config.Algorithm == AlgorithmSetting.Cpp)
+            {
+                AlgCpp.IsChecked = true;
+            }
+            else if (config_manager.Config.Algorithm == AlgorithmSetting.Assembly)
+            {
+                AlgAsm.IsChecked = true;
+            }
+            ////////////////////////////////////////////////////////////////////////
+            if (config_manager.Config.NoThreads == NoThreadsSetting.Off)
+            {
+                ThOff.IsChecked = true;
+            }
+            else if (config_manager.Config.NoThreads == NoThreadsSetting.Th2)
+            {
+                Th2.IsChecked = true;
+            }
+            else if (config_manager.Config.NoThreads == NoThreadsSetting.Th4)
+            {
+                Th4.IsChecked = true;
+            }
+            else if (config_manager.Config.NoThreads == NoThreadsSetting.Th8)
+            {
+                Th8.IsChecked = true;
+            }
+            else if (config_manager.Config.NoThreads == NoThreadsSetting.Th16)
+            {
+                Th16.IsChecked = true;
+            }
+            else if (config_manager.Config.NoThreads == NoThreadsSetting.Th32)
+            {
+                Th32.IsChecked = true;
+            }
+            else if (config_manager.Config.NoThreads == NoThreadsSetting.Th64)
+            {
+                Th64.IsChecked = true;
+            }
+            ////////////////////////////////////////////////////////////////////////
+            if (config_manager.Config.Time == TimeMeasureSetting.On)
+            {
+                TimeOn.IsChecked = true;
+            }
+            else if (config_manager.Config.Time == TimeMeasureSetting.Off)
+            {
+                TimeOff.IsChecked = true;
+            }
+            ////////////////////////////////////////////////////////////////////////
+            if (config_manager.Config.Autosave == AutosaveSetting.On)
+            {
+                AutosaveOn.IsChecked = true;
+            }
+            else if (config_manager.Config.Autosave == AutosaveSetting.Off)
+            {
+                AutosaveOff.IsChecked = true;
+            }
+            ////////////////////////////////////////////////////////////////////////
+            OutputPathTextBox.Text = config_manager.Config.OutputDirectory;
+            ////////////////////////////////////////////////////////////////////////
         }
 
         private void About_Click(object sender, RoutedEventArgs e)
@@ -207,6 +289,8 @@ namespace ContrasterIMG
 
         private void OutputPath_Changed(object sender, RoutedEventArgs e)
         {
+            Config_Change(sender, e);
+
             if (OutputPathTextBox.Text != null && OutputPathTextBox.Text != "" && System.IO.Directory.Exists(OutputPathTextBox.Text))
             {
                 OpenButton.IsEnabled = true;

@@ -49,21 +49,21 @@
                         <MenuItem.Icon>
                             <Image Source="/Images/gear.png"/>
                         </MenuItem.Icon>
-                        <RadioButton Content="C++" GroupName="Algorithm" IsChecked="true"/>
-                        <RadioButton Content="Assembly" GroupName="Algorithm"/>
+                        <RadioButton Content="C++" GroupName="Algorithm" IsChecked="true" Click="Config_Change" x:Name="AlgCpp"/>
+                        <RadioButton Content="Assembly" GroupName="Algorithm" Click="Config_Change" x:Name="AlgAsm"/>
                     </MenuItem>
 
                     <MenuItem Header="Multithreading">
                         <MenuItem.Icon>
                             <Image Source="/Images/branch.png"/>
                         </MenuItem.Icon>
-                        <RadioButton Content="OFF" GroupName="Threats" IsChecked="true"/>
-                        <RadioButton Content="2" GroupName="Threats"/>
-                        <RadioButton Content="4" GroupName="Threats"/>
-                        <RadioButton Content="8" GroupName="Threats"/>
-                        <RadioButton Content="16" GroupName="Threats"/>
-                        <RadioButton Content="32" GroupName="Threats"/>
-                        <RadioButton Content="64" GroupName="Threats"/>
+                        <RadioButton Content="Off" GroupName="Threats" IsChecked="true" Click="Config_Change" x:Name="ThOff"/>
+                        <RadioButton Content="2" GroupName="Threats" Click="Config_Change" x:Name="Th2"/>
+                        <RadioButton Content="4" GroupName="Threats" Click="Config_Change" x:Name="Th4"/>
+                        <RadioButton Content="8" GroupName="Threats" Click="Config_Change" x:Name="Th8"/>
+                        <RadioButton Content="16" GroupName="Threats" Click="Config_Change" x:Name="Th16"/>
+                        <RadioButton Content="32" GroupName="Threats" Click="Config_Change" x:Name="Th32"/>
+                        <RadioButton Content="64" GroupName="Threats" Click="Config_Change" x:Name="Th64"/>
                     </MenuItem>
 
                     <MenuItem Header="Execution time measurement">
@@ -71,8 +71,17 @@
                             <Image Source="/Images/time.png"/>
                         </MenuItem.Icon>
 
-                        <RadioButton Content="ON" GroupName="Time" IsChecked="true"/>
-                        <RadioButton Content="OFF" GroupName="Time"/>
+                        <RadioButton Content="On" GroupName="Time" IsChecked="true" Click="Config_Change" x:Name="TimeOn"/>
+                        <RadioButton Content="Off" GroupName="Time" Click="Config_Change" x:Name="TimeOff"/>
+                    </MenuItem>
+
+                    <MenuItem Header="Autosave">
+                        <MenuItem.Icon>
+                            <Image Source="/Images/save.png"/>
+                        </MenuItem.Icon>
+
+                        <RadioButton Content="On" GroupName="Autosave" IsChecked="true" Click="Config_Change" x:Name="AutosaveOn"/>
+                        <RadioButton Content="Off" GroupName="Autosave" Click="Config_Change" x:Name="AutosaveOff"/>
                     </MenuItem>
                 </MenuItem>
 
