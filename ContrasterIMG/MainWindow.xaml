@@ -126,7 +126,7 @@
 
         <Grid Grid.Row="2" Margin="5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
@@ -139,19 +139,66 @@
                     <TextBlock Text="Input file directory" HorizontalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal">
                         <Label Content="path:"/>
-                        <TextBox Margin="5" Width="250" x:Name="InputPathTextBox" TextChanged="InputPath_Changed"/>
-                        <Button Content="Browse" Margin ="5" Width="75" Click="BrowseFile_Click"/>
+                        <TextBox Width="250" Height="20" x:Name="InputPathTextBox" TextChanged="InputPath_Changed"/>
+                        <Button Content="..." Width="20" Height="20" Margin="-5, 0, 0, 0"  Click="BrowseFile_Click"/>
+                        <Button Margin ="5" Width="75" IsEnabled="false" x:Name="UploadButton" Click="Upload_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Upload" Margin="0, 0, 5, 0"/>
+                                <Image Source="/Images/upload.png" Width="16" Height="16" Opacity="0.2" x:Name="Upload_Icon"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Row="1">
                     <TextBlock Text="Output directory" HorizontalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal">
                         <Label Content="path:"/>
-                        <TextBox Margin="5" Width="250" x:Name="OutputPathTextBox"/>
-                        <Button Content="Browse" Margin ="5" Width="75" Click="BrowseFolder_Click"/>
+                        <TextBox Width="250" Height="20" x:Name="OutputPathTextBox" TextChanged="OutputPath_Changed"/>
+                        <Button Content="..." Width="20" Height="20" Margin="-5, 0, 0, 0" Click="BrowseFolder_Click"/>
+                        <Button Margin ="5" Width="75" IsEnabled="false" x:Name="OpenButton" Click="Open_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Open" Margin="0, 0, 5, 0"/>
+                                <Image Source="/Images/load.png" Width="16" Height="16" Opacity="0.2" x:Name="Open_Icon"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
 
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Slider Margin="3" Minimum="-100" Maximum="100" Value="0" TickPlacement="BottomRight" TickFrequency="10" IsSnapToTickEnabled="false" x:Name="ContrastSlider" ValueChanged="Slider_ValueChanged"/>
+                </Grid>
+                <Grid Grid.Row="1">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Width="21" Height="20" Margin="71, 0, -6, 0" HorizontalAlignment="Left" IsEnabled="false" x:Name="CenterButton" Click="Center_Click">
+                            <Image Source="/Images/center.png" IsEnabled="false" x:Name="CenterIcon" Opacity="0.2" Width="16" Height="16"/>
+                        </Button>
+                        <TextBox Width="100" Margin="5" Text="0" TextAlignment="Center" x:Name="SliderPositionBox" KeyDown="SliderPositionBox_TextChanged"/>
+                        <Button Content="Apply" Width="75" Height="20" Margin="5" HorizontalAlignment="Right" IsEnabled="false" x:Name="ApplyButton" Click="Apply_Click"/>
+                    </StackPanel>
+                </Grid>
+                <Grid Grid.Row="2">
+                    <StackPanel Orientation="Horizontal">
+                        <Grid>
+                            <ProgressBar Margin="5"  Height="15" Width="250" Minimum="0" Maximum="100" Value="0"/>
+                            <TextBlock Text="status: waiting" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontStyle="Italic"/>
+                        </Grid>
+                        <Border BorderThickness="0.5" BorderBrush="Gray" Margin="5" Width="120">
+                            <Grid>
+                                <Image Source="/Images/time.png" Height="16" Width="16" Margin="5, 0, 0, 0" HorizontalAlignment="Left"/>
+                                <TextBlock Text="N/A" Margin="30, 0, 30, 0" TextAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Grid>
 

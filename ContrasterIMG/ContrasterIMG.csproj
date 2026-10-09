@@ -13,6 +13,7 @@
     <None Remove="Images\about.png" />
     <None Remove="Images\algorithm.png" />
     <None Remove="Images\branch.png" />
+    <None Remove="Images\center.png" />
     <None Remove="Images\chillin.png" />
     <None Remove="Images\clear.png" />
     <None Remove="Images\ContrasterIMG.ico" />
@@ -23,12 +24,14 @@
     <None Remove="Images\load.png" />
     <None Remove="Images\save.png" />
     <None Remove="Images\time.png" />
+    <None Remove="Images\upload.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Images\about.png" />
     <Resource Include="Images\algorithm.png" />
     <Resource Include="Images\branch.png" />
+    <Resource Include="Images\center.png" />
     <Resource Include="Images\clear.png" />
     <Resource Include="Images\credits.png" />
     <Resource Include="Images\gear.png" />
@@ -37,6 +40,7 @@
     <Resource Include="Images\load.png" />
     <Resource Include="Images\save.png" />
     <Resource Include="Images\time.png" />
+    <Resource Include="Images\upload.png" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,7 +53,6 @@ namespace ContrasterIMG
             if (dialog.ShowDialog() == true)
             {
                 InputPathTextBox.Text = dialog.FileName;
-                InputImage.Source = new BitmapImage(new Uri(dialog.FileName));
             }
         }
 
@@ -62,14 +63,6 @@ namespace ContrasterIMG
             if(dialog.ShowDialog() == true)
             {
                 OutputPathTextBox.Text = dialog.FolderName;
-            }
-        }
-
-        private void InputPath_Changed(object sender, RoutedEventArgs e)
-        {
-            if (System.IO.File.Exists(InputPathTextBox.Text))
-            {
-                InputImage.Source = new BitmapImage(new Uri(InputPathTextBox.Text));
             }
         }
 
@@ -99,6 +92,152 @@ namespace ContrasterIMG
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
             );
+        }
+
+        private void Slider_ValueChanged(object sender, RoutedEventArgs e)
+        {
+            double new_value = Math.Round(ContrastSlider.Value, 2);
+            SliderPositionBox.Text = new_value.ToString(CultureInfo.InvariantCulture);
+
+            if(new_value != 0)
+            {
+                CenterButton.IsEnabled = true;
+                CenterIcon.Opacity = 1;
+                ApplyButton.IsEnabled = true;
+            }
+        }
+
+        private void Center_Click(object sender, RoutedEventArgs e)
+        {
+            CenterButton.IsEnabled = false;
+            CenterIcon.Opacity = 0.2;
+            ApplyButton.IsEnabled = false;
+            ContrastSlider.Value = 0;
+        }
+
+        private void Apply_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyButton.IsEnabled = false;
+        }
+
+        private void SliderPositionBox_TextChanged(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                string str = SliderPositionBox.Text;
+                double new_value = 0;
+
+                if (double.TryParse(str, CultureInfo.InvariantCulture, out new_value))
+                {
+                    ContrastSlider.Value = new_value;
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show(
+                        "Invalid value.",
+                        "ERROR - ContrasterIMG",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error
+                    );
+                }
+            }
+        }
+
+        private void Upload_Click(object sender, RoutedEventArgs e)
+        {
+            if (System.IO.File.Exists(InputPathTextBox.Text))
+            {
+                if(IsValidImage(InputPathTextBox.Text))
+                {
+                    InputImage.Source = new BitmapImage(new Uri(InputPathTextBox.Text));
+                    UploadButton.IsEnabled = false;
+                    Upload_Icon.Opacity = 0.2;
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show(
+                    "Please select valid image file.",
+                    "ERROR - ContrasterIMG",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                    );
+                }
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(
+                    "Cannot open file.",
+                    "ERROR - ContrasterIMG",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
+        }
+
+        private void Open_Click(object sender, RoutedEventArgs e)
+        {
+            if (System.IO.Directory.Exists(OutputPathTextBox.Text))
+            {
+                Process.Start("explorer.exe", OutputPathTextBox.Text);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show(
+                    "Cannot open directory.",
+                    "ERROR - ContrasterIMG",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
+        }
+
+        private void InputPath_Changed(object sender, RoutedEventArgs e)
+        {
+            if(InputPathTextBox.Text != null && InputPathTextBox.Text != "" && System.IO.File.Exists(InputPathTextBox.Text))
+            {
+                UploadButton.IsEnabled = true;
+                Upload_Icon.Opacity = 1;
+            }
+            else
+            {
+                UploadButton.IsEnabled = false;
+                Upload_Icon.Opacity = 0.2;
+            }
+        }
+
+        private void OutputPath_Changed(object sender, RoutedEventArgs e)
+        {
+            if (OutputPathTextBox.Text != null && OutputPathTextBox.Text != "" && System.IO.Directory.Exists(OutputPathTextBox.Text))
+            {
+                OpenButton.IsEnabled = true;
+                Open_Icon.Opacity = 1;
+            }
+            else
+            {
+                OpenButton.IsEnabled = false;
+                Open_Icon.Opacity = 0.2;
+            }
+        }
+
+        private bool IsValidImage(string filePath)
+        {
+            if (!System.IO.File.Exists(filePath))
+                return false;
+
+            try
+            {
+                BitmapDecoder decoder = BitmapDecoder.Create(
+                    new Uri(filePath, UriKind.Absolute),
+                    BitmapCreateOptions.PreservePixelFormat,
+                    BitmapCacheOption.OnLoad
+                );
+
+                return decoder.Frames.Count > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
