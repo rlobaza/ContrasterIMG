@@ -62,16 +62,25 @@ namespace ContrasterIMG
 
         public void SaveConfig()
         {
+            string local_app_data_path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
             string serialized = JsonSerializer.Serialize(Config, options);
 
-            File.WriteAllText("Config.json", serialized);
+            if(!System.IO.Directory.Exists(local_app_data_path + "\\ContrasterIMG"))
+            {
+                System.IO.Directory.CreateDirectory(local_app_data_path + "\\ContrasterIMG");
+            }
+
+            File.WriteAllText(local_app_data_path + "\\ContrasterIMG\\Config.json", serialized);
         }
 
         public void LoadConfig()
         {
-            if(System.IO.File.Exists("Config.json"))
+            string local_app_data_path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+            if (System.IO.File.Exists(local_app_data_path + "\\ContrasterIMG\\Config.json"))
             {
-                AppConfig? new_config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText("Config.json"), options);
+                AppConfig? new_config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(local_app_data_path + "\\ContrasterIMG\\Config.json"), options);
 
                 if (new_config != null)
                 {
