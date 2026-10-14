@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -12,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
@@ -153,6 +155,7 @@ namespace ContrasterIMG
             InputPathTextBox.Text = string.Empty;
             InputImage.Source = null;
             OutputImage.Source = null;
+            ApplyButton.IsEnabled = false;
         }
 
         private void Credits_Click(object sender, RoutedEventArgs e)
@@ -185,7 +188,11 @@ namespace ContrasterIMG
             {
                 CenterButton.IsEnabled = true;
                 CenterIcon.Opacity = 1;
-                ApplyButton.IsEnabled = true;
+
+                if(InputImage.Source != null)
+                {
+                    ApplyButton.IsEnabled = true;
+                }
             }
         }
 
@@ -197,9 +204,136 @@ namespace ContrasterIMG
             ContrastSlider.Value = 0;
         }
 
-        private void Apply_Click(object sender, RoutedEventArgs e)
+        double SliderToContrast(double slider_pos)
+        {
+            if (slider_pos < 0)
+            {
+                return 1.0 + slider_pos / 100.0;
+            }
+            else
+            {
+                return 1.0 + slider_pos * 4.0 / 100.0;
+            }
+        }
+
+        int AdjustUnits(int bytes, out String unit)
+        {
+            if(bytes < 1024)
+            {
+                unit = "B";
+                return bytes;
+            }
+            else if(bytes < 1024 * 1024)
+            {
+                unit = "KB";
+                return bytes / 1024;
+            }
+            else if (bytes < 1024 * 1024 * 1024)
+            {
+                unit = "MB";
+                return bytes / (1024 * 1024);
+            }
+            else
+            {
+                unit = "GB";
+                return bytes / (1024 * 1024 * 1024);
+            }
+                
+        }
+
+        void UpdateProgressIndicator(int progress, int pixels_size)
+        {
+            double progress_bar_value = (double)progress / (double)pixels_size * 100.0;
+            int progress_percent = (int)progress_bar_value;
+            ProgressIndicatorBar.Value = progress_bar_value;
+            String unit = "";
+
+            if(progress_bar_value != 100)
+            {
+                ProgressIndicatorString.Text = "status: working... (" + progress_percent + "%) [ " + AdjustUnits(progress, out unit) + " / " + AdjustUnits(pixels_size, out unit) + " " + unit + " ]";
+            }
+            else
+            {
+                ProgressIndicatorString.Text = "status: finished " + " (" + progress_percent + "%) [ " + AdjustUnits(progress, out unit) + " " + unit + " ]";
+            }
+        }
+
+        private async void Apply_Click(object sender, RoutedEventArgs e)
         {
             ApplyButton.IsEnabled = false;
+
+            if(InputImage.Source != null)
+            {
+                BitmapSource source_image = (BitmapSource)InputImage.Source;
+
+                int stride = source_image.PixelWidth * 4;
+
+                byte[] pixels = new byte[source_image.PixelHeight * stride];
+                source_image.CopyPixels(pixels, stride, 0);
+
+                int progress = 0;
+                int width = source_image.PixelWidth;
+                int height = source_image.PixelHeight;
+                double contrast = SliderToContrast(ContrastSlider.Value);
+                int pixels_size = stride * source_image.PixelHeight;
+
+                Stopwatch stopwatch = new Stopwatch();
+
+                ///////////////////////////////////////////////////////////////////////////////////////////
+
+                Task algorithm_task = Task.Run(() =>
+                {
+                    if(config_manager.Config.Time == TimeMeasureSetting.On)
+                    {
+                        stopwatch.Restart();
+                        AlgorithmCpp.ChangeContrast(pixels, width, height, 1, contrast, ref progress);
+                        stopwatch.Stop();
+                    }
+                    else
+                    {
+                        AlgorithmCpp.ChangeContrast(pixels, width, height, 1, contrast, ref progress);
+                    }
+                });
+
+                ///////////////////////////////////////////////////////////////////////////////////////////
+
+                while (!algorithm_task.IsCompleted)
+                {
+                    await Task.Delay(128);
+                    UpdateProgressIndicator(progress, pixels_size);
+                }
+
+                ///////////////////////////////////////////////////////////////////////////////////////////
+
+                if (config_manager.Config.Time == TimeMeasureSetting.On)
+                {
+                    AlgorithmStopwatch.Text = stopwatch.ElapsedMilliseconds.ToString() + " ms";
+                }
+                else
+                {
+                    AlgorithmStopwatch.Text = "N/A";
+                }
+
+                OutputImage.Source = ConvertToBitmap(pixels, source_image.PixelWidth, source_image.PixelHeight);
+            }
+        }
+
+        private BitmapSource ConvertToBitmap(byte[] pixels, int width, int height)
+        {
+            int stride = width * 4; // 4 bajty na piksel w BGRA32
+
+            BitmapSource bitmap = BitmapSource.Create(
+                width,
+                height,
+                96,
+                96,
+                PixelFormats.Bgra32,
+                null,
+                pixels,
+                stride
+            );
+
+            return bitmap;
         }
 
         private void SliderPositionBox_TextChanged(object sender, KeyEventArgs e)
@@ -234,6 +368,10 @@ namespace ContrasterIMG
                     InputImage.Source = new BitmapImage(new Uri(InputPathTextBox.Text));
                     UploadButton.IsEnabled = false;
                     Upload_Icon.Opacity = 0.2;
+                    if(ContrastSlider.Value != 0)
+                    {
+                        ApplyButton.IsEnabled = true;
+                    }
                 }
                 else
                 {

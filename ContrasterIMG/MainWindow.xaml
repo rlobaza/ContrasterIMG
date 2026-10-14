@@ -115,7 +115,7 @@
                     <TextBlock Text="Input" HorizontalAlignment="Center" Grid.Row="0" FontWeight="Bold" Foreground="White"/>
                 </Grid>
                 <Border BorderThickness="1" BorderBrush="LightGray" Grid.Row="1" Background="WhiteSmoke">
-                    <Image x:Name="InputImage" Margin="10"/>
+                    <Image x:Name="InputImage" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"  SnapsToDevicePixels="True" UseLayoutRounding="True"/>
                 </Border>
             </Grid>
 
@@ -128,7 +128,7 @@
                     <TextBlock Text="Output" HorizontalAlignment="Center" Grid.Row="0" FontWeight="Bold" Foreground="White"/>
                 </Grid>
                 <Border BorderThickness="1" BorderBrush="LightGray" Grid.Row="1" Background="WhiteSmoke">
-                    <Image x:Name="OutputImage" Margin="10"/>
+                    <Image x:Name="OutputImage" Margin="10" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" UseLayoutRounding="True"/>
                 </Border>
             </Grid>
         </Grid>
@@ -197,13 +197,13 @@
                 <Grid Grid.Row="2">
                     <StackPanel Orientation="Horizontal">
                         <Grid>
-                            <ProgressBar Margin="5"  Height="15" Width="250" Minimum="0" Maximum="100" Value="0"/>
-                            <TextBlock Text="status: waiting" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontStyle="Italic"/>
+                            <ProgressBar x:Name="ProgressIndicatorBar"  Height="15" Width="250" Minimum="0" Maximum="100" Value="0"/>
+                            <TextBlock x:Name="ProgressIndicatorString" Text="status: waiting" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontStyle="Italic"/>
                         </Grid>
                         <Border BorderThickness="0.5" BorderBrush="Gray" Margin="5" Width="120">
                             <Grid>
                                 <Image Source="/Images/time.png" Height="16" Width="16" Margin="5, 0, 0, 0" HorizontalAlignment="Left"/>
-                                <TextBlock Text="N/A" Margin="30, 0, 30, 0" TextAlignment="Center"/>
+                                <TextBlock x:Name="AlgorithmStopwatch" Text="N/A" Margin="30, 0, 30, 0" TextAlignment="Center"/>
                             </Grid>
                         </Border>
                     </StackPanel>
