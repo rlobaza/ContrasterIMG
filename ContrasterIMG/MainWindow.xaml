@@ -11,7 +11,7 @@
     <Window.Resources>
     </Window.Resources>
     
-    <Grid>
+    <Grid Background="WhiteSmoke">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
@@ -82,6 +82,24 @@
 
                         <RadioButton Content="On" GroupName="Autosave" IsChecked="true" Click="Config_Change" x:Name="AutosaveOn"/>
                         <RadioButton Content="Off" GroupName="Autosave" Click="Config_Change" x:Name="AutosaveOff"/>
+                    </MenuItem>
+
+                    <MenuItem Header="Preview quality">
+                        <MenuItem.Icon>
+                            <Image Source="/Images/save.png"/>
+                        </MenuItem.Icon>
+                        <RadioButton Content="Low" GroupName="PreviewQ" IsChecked="true" Click="Config_Change" x:Name="PreviewLQ"/>
+                        <RadioButton Content="Medium" GroupName="PreviewQ" Click="Config_Change" x:Name="PreviewMQ"/>
+                        <RadioButton Content="High" GroupName="PreviewQ" Click="Config_Change" x:Name="PreviewHQ"/>
+                    </MenuItem>
+
+                    <MenuItem Header="Preview scaling mode">
+                        <MenuItem.Icon>
+                            <Image Source="/Images/save.png"/>
+                        </MenuItem.Icon>
+                        <RadioButton Content="Pixelated" GroupName="PreviewScalingMode" IsChecked="true" Click="Config_Change" x:Name="PreviewModePixel"/>
+                        <RadioButton Content="Smooth (Fast)" GroupName="PreviewScalingMode" Click="Config_Change" x:Name="PreviewModeFast"/>
+                        <RadioButton Content="Smooth (High Quality)" GroupName="PreviewScalingMode" Click="Config_Change" x:Name="PreviewModeBest"/>
                     </MenuItem>
                 </MenuItem>
 

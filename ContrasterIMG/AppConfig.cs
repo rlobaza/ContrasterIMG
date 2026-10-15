@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace ContrasterIMG
 {
@@ -36,18 +37,36 @@ namespace ContrasterIMG
         On = 1
     }
 
+    public enum PreviewQualitySetting
+    {
+        Low = 128,
+        Medium = 256,
+        High = 512
+    }
+
+    public enum PreviewModeSetting
+    {
+        Pixelated = 0,
+        Fast = 1,
+        HQ = 2
+    }
+
     public class AppConfig
     {
         public AlgorithmSetting Algorithm { get; set; } = AlgorithmSetting.Cpp;
         public NoThreadsSetting NoThreads { get; set; } = NoThreadsSetting.Off;
         public TimeMeasureSetting Time { get; set; } = TimeMeasureSetting.Off;
         public AutosaveSetting Autosave { get; set; } = AutosaveSetting.Off;
+        public PreviewQualitySetting PreviewQuality { get; set; } = PreviewQualitySetting.Medium;
+        public PreviewModeSetting PreviewMode { get; set; } = PreviewModeSetting.Pixelated;
 
         public string OutputDirectory { get; set; } = "";
     };
 
     public class AppConfigManager
     {
+        MainWindow window_;
+
         public AppConfig Config = new AppConfig();
 
         private JsonSerializerOptions options = new JsonSerializerOptions()
@@ -55,9 +74,10 @@ namespace ContrasterIMG
             WriteIndented = true
         };
 
-        public AppConfigManager()
+        public AppConfigManager(MainWindow window)
         {
             options.Converters.Add(new JsonStringEnumConverter());
+            window_ = window;
         }
 
         public void SaveConfig()
@@ -85,6 +105,22 @@ namespace ContrasterIMG
                 if (new_config != null)
                 {
                     Config = new_config;
+
+                    if (Config.PreviewMode == PreviewModeSetting.Pixelated)
+                    {
+                        RenderOptions.SetBitmapScalingMode(window_.InputImage, BitmapScalingMode.NearestNeighbor);
+                        RenderOptions.SetBitmapScalingMode(window_.OutputImage, BitmapScalingMode.NearestNeighbor);
+                    }
+                    if (Config.PreviewMode == PreviewModeSetting.Fast)
+                    {
+                        RenderOptions.SetBitmapScalingMode(window_.InputImage, BitmapScalingMode.LowQuality);
+                        RenderOptions.SetBitmapScalingMode(window_.OutputImage, BitmapScalingMode.LowQuality);
+                    }
+                    if (Config.PreviewMode == PreviewModeSetting.HQ)
+                    {
+                        RenderOptions.SetBitmapScalingMode(window_.InputImage, BitmapScalingMode.HighQuality);
+                        RenderOptions.SetBitmapScalingMode(window_.OutputImage, BitmapScalingMode.HighQuality);
+                    }
                 }
             }
         }
@@ -142,6 +178,30 @@ namespace ContrasterIMG
             if (sender == "AutosaveOff")
             {
                 Config.Autosave = AutosaveSetting.Off;
+            }
+            if (sender == "PreviewLQ")
+            {
+                Config.PreviewQuality = PreviewQualitySetting.Low;
+            }
+            if (sender == "PreviewMQ")
+            {
+                Config.PreviewQuality = PreviewQualitySetting.Medium;
+            }
+            if (sender == "PreviewHQ")
+            {
+                Config.PreviewQuality = PreviewQualitySetting.High;
+            }
+            if (sender == "PreviewModePixel")
+            {
+                Config.PreviewMode = PreviewModeSetting.Pixelated;
+            }
+            if (sender == "PreviewModeFast")
+            {
+                Config.PreviewMode = PreviewModeSetting.Fast;
+            }
+            if (sender == "PreviewModeBest")
+            {
+                Config.PreviewMode = PreviewModeSetting.HQ;
             }
         }
 

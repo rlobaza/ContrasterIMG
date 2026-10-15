@@ -25,12 +25,19 @@ namespace ContrasterIMG
 
     public partial class MainWindow : Window
     {
-        AppConfigManager config_manager = new AppConfigManager();
+        AppConfigManager config_manager;
+        ImageManager image_manager;
+        AlgorithmManager algorithm_manager;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            config_manager = new AppConfigManager(this);
             Config_Load();
+
+            algorithm_manager = new AlgorithmManager(this, config_manager);
+            image_manager = new ImageManager(this, config_manager, algorithm_manager);
         }
 
         public void Config_Change(object sender, RoutedEventArgs e)
@@ -40,6 +47,25 @@ namespace ContrasterIMG
             if (sender is RadioButton button)
             {
                 config_manager.UpdateConfigSettings(button.Name.ToString());
+
+                if(button.Name.ToString() == "PreviewModePixel")
+                {
+                    RenderOptions.SetBitmapScalingMode(InputImage, BitmapScalingMode.NearestNeighbor);
+                    RenderOptions.SetBitmapScalingMode(OutputImage, BitmapScalingMode.NearestNeighbor);
+                }
+                if (button.Name.ToString() == "PreviewModeFast")
+                {
+                    RenderOptions.SetBitmapScalingMode(InputImage, BitmapScalingMode.LowQuality);
+                    RenderOptions.SetBitmapScalingMode(OutputImage, BitmapScalingMode.LowQuality);
+                }
+                if (button.Name.ToString() == "PreviewModeBest")
+                {
+                    RenderOptions.SetBitmapScalingMode(InputImage, BitmapScalingMode.HighQuality);
+                    RenderOptions.SetBitmapScalingMode(OutputImage, BitmapScalingMode.HighQuality);
+                }
+
+                image_manager.LoadPreviewImage();
+                image_manager.UpdatePreviewImage();
             }
 
             config_manager.SaveConfig();
@@ -105,6 +131,32 @@ namespace ContrasterIMG
                 AutosaveOff.IsChecked = true;
             }
             ////////////////////////////////////////////////////////////////////////
+            if (config_manager.Config.PreviewQuality == PreviewQualitySetting.Low)
+            {
+                PreviewLQ.IsChecked = true;
+            }
+            if (config_manager.Config.PreviewQuality == PreviewQualitySetting.Medium)
+            {
+                PreviewMQ.IsChecked = true;
+            }
+            if (config_manager.Config.PreviewQuality == PreviewQualitySetting.High)
+            {
+                PreviewHQ.IsChecked = true;
+            }
+            ////////////////////////////////////////////////////////////////////////
+            if (config_manager.Config.PreviewMode == PreviewModeSetting.Pixelated)
+            {
+                PreviewModePixel.IsChecked = true;
+            }
+            if (config_manager.Config.PreviewMode == PreviewModeSetting.Fast)
+            {
+                PreviewModeFast.IsChecked = true;
+            }
+            if (config_manager.Config.PreviewMode == PreviewModeSetting.HQ)
+            {
+                PreviewModeBest.IsChecked = true;
+            }
+            ////////////////////////////////////////////////////////////////////////
             OutputPathTextBox.Text = config_manager.Config.OutputDirectory;
             ////////////////////////////////////////////////////////////////////////
         }
@@ -153,9 +205,7 @@ namespace ContrasterIMG
         private void Clear_Click(object sender, RoutedEventArgs e)
         {
             InputPathTextBox.Text = string.Empty;
-            InputImage.Source = null;
-            OutputImage.Source = null;
-            ApplyButton.IsEnabled = false;
+            image_manager.Clear();
         }
 
         private void Credits_Click(object sender, RoutedEventArgs e)
@@ -179,23 +229,6 @@ namespace ContrasterIMG
             );
         }
 
-        private void Slider_ValueChanged(object sender, RoutedEventArgs e)
-        {
-            double new_value = Math.Round(ContrastSlider.Value, 2);
-            SliderPositionBox.Text = new_value.ToString(CultureInfo.InvariantCulture);
-
-            if(new_value != 0)
-            {
-                CenterButton.IsEnabled = true;
-                CenterIcon.Opacity = 1;
-
-                if(InputImage.Source != null)
-                {
-                    ApplyButton.IsEnabled = true;
-                }
-            }
-        }
-
         private void Center_Click(object sender, RoutedEventArgs e)
         {
             CenterButton.IsEnabled = false;
@@ -204,44 +237,32 @@ namespace ContrasterIMG
             ContrastSlider.Value = 0;
         }
 
-        double SliderToContrast(double slider_pos)
-        {
-            if (slider_pos < 0)
-            {
-                return 1.0 + slider_pos / 100.0;
-            }
-            else
-            {
-                return 1.0 + slider_pos * 4.0 / 100.0;
-            }
-        }
-
-        int AdjustUnits(int bytes, out String unit)
+        double AdjustUnits(int bytes, out String unit)
         {
             if(bytes < 1024)
             {
                 unit = "B";
                 return bytes;
             }
-            else if(bytes < 1024 * 1024)
+            else if(bytes < 1024.0 * 1024.0)
             {
                 unit = "KB";
-                return bytes / 1024;
+                return bytes / 1024.0;
             }
-            else if (bytes < 1024 * 1024 * 1024)
+            else if (bytes < 1024.0 * 1024.0 * 1024.0)
             {
                 unit = "MB";
-                return bytes / (1024 * 1024);
+                return bytes / (1024.0 * 1024.0);
             }
             else
             {
                 unit = "GB";
-                return bytes / (1024 * 1024 * 1024);
+                return bytes / (1024.0 * 1024.0 * 1024.0);
             }
                 
         }
 
-        void UpdateProgressIndicator(int progress, int pixels_size)
+        public void UpdateProgressIndicator(int progress, int pixels_size)
         {
             double progress_bar_value = (double)progress / (double)pixels_size * 100.0;
             int progress_percent = (int)progress_bar_value;
@@ -250,90 +271,38 @@ namespace ContrasterIMG
 
             if(progress_bar_value != 100)
             {
-                ProgressIndicatorString.Text = "status: working... (" + progress_percent + "%) [ " + AdjustUnits(progress, out unit) + " / " + AdjustUnits(pixels_size, out unit) + " " + unit + " ]";
+                ProgressIndicatorString.Text = "status: working... (" + progress_percent + "%) [ " + AdjustUnits(progress, out unit).ToString("F2") + " " + unit + " / " + AdjustUnits(pixels_size, out unit).ToString("F2") + " " + unit + " ]";
             }
             else
             {
-                ProgressIndicatorString.Text = "status: finished " + " (" + progress_percent + "%) [ " + AdjustUnits(progress, out unit) + " " + unit + " ]";
+                ProgressIndicatorString.Text = "status: finished " + " (" + progress_percent + "%) [ " + AdjustUnits(progress, out unit).ToString("F2") + " " + unit + " ]";
             }
         }
 
-        private async void Apply_Click(object sender, RoutedEventArgs e)
+        private void Apply_Click(object sender, RoutedEventArgs e)
         {
             ApplyButton.IsEnabled = false;
-
-            if(InputImage.Source != null)
-            {
-                BitmapSource source_image = (BitmapSource)InputImage.Source;
-
-                int stride = source_image.PixelWidth * 4;
-
-                byte[] pixels = new byte[source_image.PixelHeight * stride];
-                source_image.CopyPixels(pixels, stride, 0);
-
-                int progress = 0;
-                int width = source_image.PixelWidth;
-                int height = source_image.PixelHeight;
-                double contrast = SliderToContrast(ContrastSlider.Value);
-                int pixels_size = stride * source_image.PixelHeight;
-
-                Stopwatch stopwatch = new Stopwatch();
-
-                ///////////////////////////////////////////////////////////////////////////////////////////
-
-                Task algorithm_task = Task.Run(() =>
-                {
-                    if(config_manager.Config.Time == TimeMeasureSetting.On)
-                    {
-                        stopwatch.Restart();
-                        AlgorithmCpp.ChangeContrast(pixels, width, height, 1, contrast, ref progress);
-                        stopwatch.Stop();
-                    }
-                    else
-                    {
-                        AlgorithmCpp.ChangeContrast(pixels, width, height, 1, contrast, ref progress);
-                    }
-                });
-
-                ///////////////////////////////////////////////////////////////////////////////////////////
-
-                while (!algorithm_task.IsCompleted)
-                {
-                    await Task.Delay(128);
-                    UpdateProgressIndicator(progress, pixels_size);
-                }
-
-                ///////////////////////////////////////////////////////////////////////////////////////////
-
-                if (config_manager.Config.Time == TimeMeasureSetting.On)
-                {
-                    AlgorithmStopwatch.Text = stopwatch.ElapsedMilliseconds.ToString() + " ms";
-                }
-                else
-                {
-                    AlgorithmStopwatch.Text = "N/A";
-                }
-
-                OutputImage.Source = ConvertToBitmap(pixels, source_image.PixelWidth, source_image.PixelHeight);
-            }
+            image_manager.CreateOutputImage();
         }
 
-        private BitmapSource ConvertToBitmap(byte[] pixels, int width, int height)
+        private void Slider_ValueChanged(object sender, RoutedEventArgs e)
         {
-            int stride = width * 4; // 4 bajty na piksel w BGRA32
+            double new_value = Math.Round(ContrastSlider.Value, 2);
+            SliderPositionBox.Text = new_value.ToString(CultureInfo.InvariantCulture);
 
-            BitmapSource bitmap = BitmapSource.Create(
-                width,
-                height,
-                96,
-                96,
-                PixelFormats.Bgra32,
-                null,
-                pixels,
-                stride
-            );
+            if (new_value != 0)
+            {
+                CenterButton.IsEnabled = true;
+                CenterIcon.Opacity = 1;
 
-            return bitmap;
+                if (InputImage.Source != null)
+                {
+                    ApplyButton.IsEnabled = true;
+                }
+            }
+
+            image_manager.DiscardOutputImage();
+            image_manager.UpdatePreviewImage();
         }
 
         private void SliderPositionBox_TextChanged(object sender, KeyEventArgs e)
@@ -361,36 +330,9 @@ namespace ContrasterIMG
 
         private void Upload_Click(object sender, RoutedEventArgs e)
         {
-            if (System.IO.File.Exists(InputPathTextBox.Text))
+            if(image_manager.LoadInputImage())
             {
-                if(IsValidImage(InputPathTextBox.Text))
-                {
-                    InputImage.Source = new BitmapImage(new Uri(InputPathTextBox.Text));
-                    UploadButton.IsEnabled = false;
-                    Upload_Icon.Opacity = 0.2;
-                    if(ContrastSlider.Value != 0)
-                    {
-                        ApplyButton.IsEnabled = true;
-                    }
-                }
-                else
-                {
-                    System.Windows.MessageBox.Show(
-                    "Please select valid image file.",
-                    "ERROR - ContrasterIMG",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                    );
-                }
-            }
-            else
-            {
-                System.Windows.MessageBox.Show(
-                    "Cannot open file.",
-                    "ERROR - ContrasterIMG",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                );
+                Center_Click(sender, e);
             }
         }
 
@@ -438,27 +380,6 @@ namespace ContrasterIMG
             {
                 OpenButton.IsEnabled = false;
                 Open_Icon.Opacity = 0.2;
-            }
-        }
-
-        private bool IsValidImage(string filePath)
-        {
-            if (!System.IO.File.Exists(filePath))
-                return false;
-
-            try
-            {
-                BitmapDecoder decoder = BitmapDecoder.Create(
-                    new Uri(filePath, UriKind.Absolute),
-                    BitmapCreateOptions.PreservePixelFormat,
-                    BitmapCacheOption.OnLoad
-                );
-
-                return decoder.Frames.Count > 0;
-            }
-            catch
-            {
-                return false;
             }
         }
     }

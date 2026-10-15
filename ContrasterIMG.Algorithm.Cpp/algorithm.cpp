@@ -19,34 +19,40 @@ void calculatePixelColor(std::uint8_t& pixel, double contrast)
 	pixel = new_value;
 }
 
-void changeContrast(std::uint8_t* pixels, int img_width, int img_height, int no_threads, double contrast, int* progress)
+void changeContrast(std::uint8_t* pixels, int img_width, int img_height, int no_threads, double contrast, int* local_progress, int start_row, int end_row)
 {
 	int stride = img_width * 4;
 	int pixels_size = stride * img_height;
+	int start_byte = start_row * stride;
+	int end_byte = (end_row + 1) * stride - 1;
 
-	for (int i = 0; i < pixels_size; i += 4)
+	for (int i = start_byte; i <= end_byte; i += 4)
 	{
 		// B
 		if (i < pixels_size)
 		{
 			calculatePixelColor(pixels[i], contrast);
-			*progress = i + 1;
-		}
-		// G
-		if (i < pixels_size)
-		{
-			calculatePixelColor(pixels[i + 1], contrast);
-			*progress = i + 2;
-		}
-		// R
-		if (i < pixels_size)
-		{
-			calculatePixelColor(pixels[i + 2], contrast);
-			*progress = i + 3;
-		}
-		if (i < pixels_size)
-		{
-			*progress = i + 4;
+			(*local_progress)++;
+
+			// G
+			if (i + 1 < pixels_size)
+			{
+				calculatePixelColor(pixels[i + 1], contrast);
+				(*local_progress)++;
+
+				// R
+				if (i + 2 < pixels_size)
+				{
+					calculatePixelColor(pixels[i + 2], contrast);
+					(*local_progress)++;
+
+					// A
+					if (i + 3 < pixels_size)
+					{
+						(*local_progress)++;
+					}
+				}
+			}
 		}
 	}
 }
