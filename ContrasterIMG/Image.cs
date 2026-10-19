@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace ContrasterIMG
 {
@@ -19,6 +21,8 @@ namespace ContrasterIMG
         public BitmapSource? InputImage;
         public BitmapSource? PreviewImage;
         public BitmapSource? OutputImage;
+
+        private double contrast_slider_value_ = 0;
 
         public ImageManager(MainWindow window, AppConfigManager config_manager, AlgorithmManager algorithm_manager)
         {
@@ -154,18 +158,31 @@ namespace ContrasterIMG
             }
         }
 
-        public async void CreateOutputImage()
+        public async void CreateOutputImage(bool for_measurement_only)
         {
             if(InputImage != null)
             {
-                OutputImage = await algorithm_manager_.ChangeContrast(InputImage, true);
-                UpdatePreviewImage();
+                if(for_measurement_only)
+                {
+                    await algorithm_manager_.ChangeContrast(InputImage, false, contrast_slider_value_);
+                }
+                else
+                {
+                    OutputImage = await algorithm_manager_.ChangeContrast(InputImage, true, contrast_slider_value_);
+                    UpdatePreviewImage();
+                }
             }
         }
 
         public void UpdateInputImage()
         {
-            if(InputImage != null)
+            if (!window_.Dispatcher.CheckAccess())
+            {
+                window_.Dispatcher.Invoke(() => UpdateInputImage());
+                return;
+            }
+
+            if (InputImage != null)
             {
                 window_.InputImage.Source = InputImage;
             }
@@ -173,7 +190,13 @@ namespace ContrasterIMG
 
         public async void UpdatePreviewImage()
         {
-            if(OutputImage != null)
+            if (!window_.Dispatcher.CheckAccess())
+            {
+                window_.Dispatcher.Invoke(() => UpdatePreviewImage());
+                return;
+            }
+
+            if (OutputImage != null)
             {
                 window_.OutputImage.Source = OutputImage;
             }
@@ -181,7 +204,7 @@ namespace ContrasterIMG
             {
                 if (PreviewImage != null)
                 {
-                    window_.OutputImage.Source = await algorithm_manager_.ChangeContrast(PreviewImage, false);
+                    window_.OutputImage.Source = await algorithm_manager_.ChangeContrast(PreviewImage, false, contrast_slider_value_);
                 }
             }
         }
@@ -198,6 +221,11 @@ namespace ContrasterIMG
             InputImage = null;
             PreviewImage = null;
             OutputImage = null;
+        }
+
+        public void UpdateContrastSliderValue()
+        {
+            contrast_slider_value_ = window_.ContrastSlider.Value;
         }
     }
 }
