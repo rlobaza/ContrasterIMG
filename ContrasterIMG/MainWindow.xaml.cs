@@ -29,6 +29,8 @@ namespace ContrasterIMG
         ImageManager image_manager;
         AlgorithmManager algorithm_manager;
 
+        ExecutionTimeMeasurer time_measurer;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -36,7 +38,8 @@ namespace ContrasterIMG
             config_manager = new AppConfigManager(this);
             Config_Load();
 
-            algorithm_manager = new AlgorithmManager(this, config_manager);
+            time_measurer = new ExecutionTimeMeasurer(this, 10);
+            algorithm_manager = new AlgorithmManager(this, config_manager, time_measurer);
             image_manager = new ImageManager(this, config_manager, algorithm_manager);
         }
 
@@ -264,6 +267,12 @@ namespace ContrasterIMG
 
         public void UpdateProgressIndicator(int progress, int pixels_size)
         {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => UpdateProgressIndicator(progress, pixels_size));
+                return;
+            }
+
             double progress_bar_value = (double)progress / (double)pixels_size * 100.0;
             int progress_percent = (int)progress_bar_value;
             ProgressIndicatorBar.Value = progress_bar_value;
@@ -279,10 +288,80 @@ namespace ContrasterIMG
             }
         }
 
-        private void Apply_Click(object sender, RoutedEventArgs e)
+        public void UpdateProgressIndicatorMeasurement(int progress, int image_count)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.Invoke(() => UpdateProgressIndicatorMeasurement(progress, image_count));
+                return;
+            }
+
+            double progress_bar_value = (double)progress / (double)image_count * 100.0;
+            int progress_percent = (int)progress_bar_value;
+            ProgressIndicatorBar.Value = progress_bar_value;
+
+            if (progress_bar_value != 100)
+            {
+                ProgressIndicatorString.Text = "status: working... (" + progress_percent + "%) [ " + progress + " / " + image_count + " ] " + "alg: " + config_manager.Config.Algorithm + ", threads: " + (int)config_manager.Config.NoThreads;
+            }
+            else
+            {
+                ProgressIndicatorString.Text = "status: finished " + " (" + progress_percent + "%) [ " + progress + " ]";
+            }
+        }
+
+
+        private async void Apply_Click(object sender, RoutedEventArgs e)
         {
             ApplyButton.IsEnabled = false;
-            image_manager.CreateOutputImage();
+            image_manager.UpdateContrastSliderValue();
+
+            if (config_manager.Config.Time == TimeMeasureSetting.Off)
+            {
+                image_manager.CreateOutputImage(false);
+            }
+            else
+            {
+                AppConfig config_backp = config_manager.Config;
+                config_manager.Config.Autosave = AutosaveSetting.Off;
+
+                int progress = 0;
+                int image_count = Enum.GetValues<AlgorithmSetting>().Length * Enum.GetValues<NoThreadsSetting>().Length * time_measurer.NoMeasurements;
+
+                foreach (AlgorithmSetting algorithm in Enum.GetValues<AlgorithmSetting>())
+                {
+                    config_manager.Config.Algorithm = algorithm;
+
+                    foreach (NoThreadsSetting no_threads in Enum.GetValues<NoThreadsSetting>())
+                    {
+                        config_manager.Config.NoThreads = no_threads;
+
+                        image_manager.CreateOutputImage(true);
+
+                        for (int i = 0; i < time_measurer.NoMeasurements; i++)
+                        {
+                            image_manager.DiscardOutputImage();
+
+                            Task apply_task = Task.Run(() =>
+                            {
+                                image_manager.CreateOutputImage(true);
+                            });
+
+                            await apply_task;
+                            time_measurer.SaveMeasurement();
+
+                            progress++;
+                            UpdateProgressIndicatorMeasurement(progress, image_count);
+                        }
+
+                    }
+                }
+
+                config_manager.Config = config_backp;
+
+                time_measurer.ExportMeasurements();
+                time_measurer.ClearMeasurements();
+            }
         }
 
         private void Slider_ValueChanged(object sender, RoutedEventArgs e)
@@ -301,6 +380,7 @@ namespace ContrasterIMG
                 }
             }
 
+            image_manager.UpdateContrastSliderValue();
             image_manager.DiscardOutputImage();
             image_manager.UpdatePreviewImage();
         }

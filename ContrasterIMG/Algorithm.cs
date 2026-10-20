@@ -15,10 +15,13 @@ namespace ContrasterIMG
         private MainWindow window_;
         private AppConfigManager config_manager_;
 
-        public AlgorithmManager(MainWindow window, AppConfigManager config_manager)
+        private ExecutionTimeMeasurer time_measurer_;
+
+        public AlgorithmManager(MainWindow window, AppConfigManager config_manager, ExecutionTimeMeasurer time_measurer)
         {
             window_ = window;
             config_manager_ = config_manager;
+            time_measurer_ = time_measurer;
         }
 
         [DllImport("ContrasterIMG.Algorithm.Cpp.dll", EntryPoint = "changeContrast", CallingConvention = CallingConvention.Cdecl)]
@@ -44,7 +47,7 @@ namespace ContrasterIMG
             }
         }
 
-        public async Task<BitmapSource> ChangeContrast(BitmapSource source_image, bool generate_info)
+        public async Task<BitmapSource> ChangeContrast(BitmapSource source_image, bool generate_info, double contrast_slider_value)
         {
             int stride = source_image.PixelWidth * 4;
 
@@ -53,10 +56,8 @@ namespace ContrasterIMG
 
             int width = source_image.PixelWidth;
             int height = source_image.PixelHeight;
-            double contrast = SliderToContrast(window_.ContrastSlider.Value);
+            double contrast = SliderToContrast(contrast_slider_value);
             int pixels_size = stride * source_image.PixelHeight;
-
-            Stopwatch stopwatch = new Stopwatch();
 
             int progress = 0;
             int no_threads = (int)config_manager_.Config.NoThreads;
@@ -102,7 +103,7 @@ namespace ContrasterIMG
             
             Task all_tasks = Task.WhenAll(tasks);
 
-            stopwatch.Restart();
+            time_measurer_.Restart();
 
             while (!all_tasks.IsCompleted)
             {
@@ -121,7 +122,7 @@ namespace ContrasterIMG
                 }
             }
 
-            stopwatch.Stop();
+            time_measurer_.Stop();
 
             if (generate_info)
             {
@@ -130,14 +131,7 @@ namespace ContrasterIMG
 
             ///////////////////////////////////////////////////////////////////////////////////////////
 
-            if (config_manager_.Config.Time == TimeMeasureSetting.On && generate_info)
-            {
-                window_.AlgorithmStopwatch.Text = stopwatch.ElapsedMilliseconds.ToString() + " ms";
-            }
-            else if (generate_info)
-            {
-                window_.AlgorithmStopwatch.Text = "N/A";
-            }
+            time_measurer_.Post();
 
             return ConvertToBitmap(pixels, source_image.PixelWidth, source_image.PixelHeight);
         }
