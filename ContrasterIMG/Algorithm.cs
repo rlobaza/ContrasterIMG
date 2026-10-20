@@ -62,10 +62,10 @@ namespace ContrasterIMG
             int no_threads = (int)config_manager_.Config.NoThreads;
             int rows_per_thread = (int)(height / no_threads);
             int remainder = height % no_threads;
-            int start_row = 0;  
+            int start_row = 0;
 
             ///////////////////////////////////////////////////////////////////////////////////////////
-
+            
             List<Task> tasks = new List<Task>();
             int[] local_progresses = new int[no_threads];
 
