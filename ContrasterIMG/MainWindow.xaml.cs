@@ -318,7 +318,7 @@ namespace ContrasterIMG
 
             if (config_manager.Config.Time == TimeMeasureSetting.Off)
             {
-                image_manager.CreateOutputImage(false);
+                await image_manager.CreateOutputImage(false);
             }
             else
             {
@@ -336,18 +336,17 @@ namespace ContrasterIMG
                     {
                         config_manager.Config.NoThreads = no_threads;
 
-                        image_manager.CreateOutputImage(true);
+                        await image_manager.CreateOutputImage(true);
 
                         for (int i = 0; i < time_measurer.NoMeasurements; i++)
                         {
                             image_manager.DiscardOutputImage();
 
-                            Task apply_task = Task.Run(() =>
+                            Task apply_task = Task.Run(async () =>
                             {
-                                image_manager.CreateOutputImage(true);
+                                await image_manager.CreateOutputImage(true);
                             });
 
-                            await apply_task;
                             time_measurer.SaveMeasurement();
 
                             progress++;

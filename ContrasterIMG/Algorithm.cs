@@ -70,7 +70,9 @@ namespace ContrasterIMG
             List<Task> tasks = new List<Task>();
             int[] local_progresses = new int[no_threads];
 
-            for(int i = 0; i < no_threads; i++)
+            time_measurer_.Restart();
+
+            for (int i = 0; i < no_threads; i++)
             {
                 if (start_row >= height) break;
 
@@ -103,11 +105,9 @@ namespace ContrasterIMG
             
             Task all_tasks = Task.WhenAll(tasks);
 
-            time_measurer_.Restart();
-
             while (!all_tasks.IsCompleted)
             {
-                await Task.Delay(8);
+                await Task.Delay(1);
 
                 if (generate_info)
                 {

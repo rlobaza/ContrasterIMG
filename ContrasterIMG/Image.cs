@@ -158,7 +158,7 @@ namespace ContrasterIMG
             }
         }
 
-        public async void CreateOutputImage(bool for_measurement_only)
+        public async Task CreateOutputImage(bool for_measurement_only)
         {
             if(InputImage != null)
             {
