@@ -25,7 +25,7 @@ namespace ContrasterIMG
         }
 
         [DllImport("ContrasterIMG.Algorithm.Cpp.dll", EntryPoint = "changeContrast", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void ChangeContrastCpp([In, Out] byte[] pixels, int img_width, int img_height, int no_threads, double contrast, ref int progress, int start_row, int end_row);
+        internal static extern void ChangeContrastCpp([In, Out] byte[] pixels, int img_width, int img_height, double contrast, ref int progress, int start_row, int end_row);
 
         private BitmapSource ConvertToBitmap(byte[] pixels, int width, int height)
         {
@@ -93,7 +93,7 @@ namespace ContrasterIMG
 
                 Task algorithm_task = Task.Run(() =>
                 {
-                    ChangeContrastCpp(pixels, width, height, 1, contrast, ref local_progresses[threadIndex], sRow, eRow);
+                    ChangeContrastCpp(pixels, width, height, contrast, ref local_progresses[threadIndex], sRow, eRow);
                 });
 
                 tasks.Add(algorithm_task);
@@ -127,11 +127,10 @@ namespace ContrasterIMG
             if (generate_info)
             {
                 window_.UpdateProgressIndicator(progress, pixels_size);
+                time_measurer_.Post();
             }
 
             ///////////////////////////////////////////////////////////////////////////////////////////
-
-            time_measurer_.Post();
 
             return ConvertToBitmap(pixels, source_image.PixelWidth, source_image.PixelHeight);
         }
