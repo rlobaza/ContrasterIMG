@@ -38,7 +38,7 @@ namespace ContrasterIMG
             config_manager = new AppConfigManager(this);
             Config_Load();
 
-            time_measurer = new ExecutionTimeMeasurer(this, 10);
+            time_measurer = new ExecutionTimeMeasurer(this, 50);
             algorithm_manager = new AlgorithmManager(this, config_manager, time_measurer);
             image_manager = new ImageManager(this, config_manager, algorithm_manager);
         }
@@ -342,10 +342,7 @@ namespace ContrasterIMG
                         {
                             image_manager.DiscardOutputImage();
 
-                            Task apply_task = Task.Run(async () =>
-                            {
-                                await image_manager.CreateOutputImage(true);
-                            });
+                            await image_manager.CreateOutputImage(true);
 
                             time_measurer.SaveMeasurement();
 

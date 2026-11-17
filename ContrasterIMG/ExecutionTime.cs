@@ -70,36 +70,6 @@ namespace ContrasterIMG
             next_index = 0;
         }
 
-        //public void ExportMeasurements()
-        //{
-        //    String output = "";
-        //    int i = 0;
-
-        //    foreach (AlgorithmSetting algorithm in Enum.GetValues<AlgorithmSetting>())
-        //    {
-        //        foreach (NoThreadsSetting no_threads in Enum.GetValues<NoThreadsSetting>())
-        //        {
-        //            output += "alg: " + algorithm + ", threads: " + no_threads + " [ ";
-
-        //            for (int j = i; j < i + NoMeasurements; j++)
-        //            {
-        //                output += measurements_[j].ToString() + " ";
-        //            }
-
-        //            output += " ]\n";
-
-        //            i += NoMeasurements;
-        //        }
-        //    }
-
-        //    System.Windows.MessageBox.Show(
-        //        output,
-        //        "Output",
-        //        MessageBoxButton.OK,
-        //        MessageBoxImage.Information
-        //    );
-        //}
-
         public void ExportMeasurements()
         {
             String output = "execution time measurement\n";
@@ -107,9 +77,9 @@ namespace ContrasterIMG
             output += ";;;;";
             for (int k = 0; k < NoMeasurements; k++)
             {
-                output += "sample" + k + ";";
+                output += "sample" + (k + 1) + ";";
             }
-            output += "\n";
+            output += "average\n";
 
             int i = 0;
 
@@ -117,28 +87,28 @@ namespace ContrasterIMG
             {
                 foreach (NoThreadsSetting no_threads in Enum.GetValues<NoThreadsSetting>())
                 {
-                    output += "alg:;" + algorithm + ";threads:;" + no_threads;
+                    double ?average = 0;
+                    output += "alg:;" + algorithm + ";threads:;" + no_threads + ";";
                     for (int j = i; j < i + NoMeasurements; j++)
                     {
-                        output += ";" + measurements_[j].ToString();
+                        output += measurements_[j].ToString() + ";";
+                        average += measurements_[j];
                     }
+                    average = average / NoMeasurements;
 
-                    output += "\n";
+                    output += average + "\n";
 
                     i += NoMeasurements;
                 }
             }
 
-            // --- DODANA CZĘŚĆ: Zapis do pliku ---
             Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog();
             dialog.FileName = "measurements_report"; // Domyślna nazwa pliku
             dialog.DefaultExt = ".csv";             // Domyślne rozszerzenie
             dialog.Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt|All files (*.*)|*.*";
 
-            // Jeśli użytkownik kliknie "Zapisz"
             if (dialog.ShowDialog() == true)
             {
-                // Zapisujemy cały tekst do wybranego pliku (kodowanie UTF-8 ładnie obsłuży znaki)
                 System.IO.File.WriteAllText(dialog.FileName, output, Encoding.UTF8);
 
                 System.Windows.MessageBox.Show(
