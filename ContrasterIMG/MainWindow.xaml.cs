@@ -38,7 +38,7 @@ namespace ContrasterIMG
             config_manager = new AppConfigManager(this);
             Config_Load();
 
-            time_measurer = new ExecutionTimeMeasurer(this, 50);
+            time_measurer = new ExecutionTimeMeasurer(this, 10);
             algorithm_manager = new AlgorithmManager(this, config_manager, time_measurer);
             image_manager = new ImageManager(this, config_manager, algorithm_manager);
         }
@@ -322,7 +322,17 @@ namespace ContrasterIMG
             }
             else
             {
-                AppConfig config_backp = config_manager.Config;
+                AppConfig config_backup = new AppConfig
+                {
+                    Algorithm = config_manager.Config.Algorithm,
+                    NoThreads = config_manager.Config.NoThreads,
+                    Time = config_manager.Config.Time,
+                    Autosave = config_manager.Config.Autosave,
+                    PreviewQuality = config_manager.Config.PreviewQuality,
+                    PreviewMode = config_manager.Config.PreviewMode,
+                    OutputDirectory = config_manager.Config.OutputDirectory
+                };
+
                 config_manager.Config.Autosave = AutosaveSetting.Off;
 
                 int progress = 0;
@@ -353,7 +363,7 @@ namespace ContrasterIMG
                     }
                 }
 
-                config_manager.Config = config_backp;
+                config_manager.Config = config_backup;
 
                 time_measurer.ExportMeasurements();
                 time_measurer.ClearMeasurements();
