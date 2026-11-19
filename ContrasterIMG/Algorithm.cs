@@ -70,8 +70,6 @@ namespace ContrasterIMG
             Thread[] threads = new Thread[no_threads];
             int[] local_progresses = new int[no_threads];
 
-            time_measurer_.Restart();
-
             for (int i = 0; i < no_threads; i++)
             {
                 int current_rows = rows_per_thread + (i < remainder ? 1 : 0);
@@ -88,34 +86,45 @@ namespace ContrasterIMG
                     ChangeContrastCpp(pixels, width, height, contrast, ref local_progresses[threadIndex], sRow, eRow);
                 });
 
-                threads[threadIndex].Start();
-
                 start_row = eRow + 1;
             }
 
             ///////////////////////////////////////////////////////////////////////////////////////////
 
-            while (threads.Any(t => t.IsAlive))
+            time_measurer_.Restart();
+
+            for (int i = 0; i < no_threads; i++)
             {
-                await Task.Delay(1);
+                threads[i].Start();
+            }
 
-                if (generate_info)
+            ///////////////////////////////////////////////////////////////////////////////////////////
+
+            await Task.Run(() =>
+            {
+                while (threads.Any(t => t != null && t.IsAlive))
                 {
-                    progress = 0;
-
-                    for (int i = 0; i < no_threads; i++)
+                    if (generate_info)
                     {
-                        progress += local_progresses[i];
+                        progress = local_progresses.Sum();
+                        window_.Dispatcher.InvokeAsync(() =>
+                            window_.UpdateProgressIndicator(progress, pixels_size));
                     }
 
-                    window_.UpdateProgressIndicator(progress, pixels_size);
+                    Thread.Sleep(1);
                 }
-            }
+
+                foreach (var t in threads)
+                {
+                    t?.Join();
+                }
+            });
 
             time_measurer_.Stop();
 
             if (generate_info)
             {
+                progress = local_progresses.Sum();
                 window_.UpdateProgressIndicator(progress, pixels_size);
                 time_measurer_.Post();
             }

@@ -60,7 +60,7 @@ void changeContrast(std::uint8_t* pixels, int img_width, int img_height, double 
 			}
 		}
 
-		if (i % 256 == 0 && local_progress_ok)
+		if (i % 1024 == 0 && local_progress_ok)
 			*local_progress = local_progress_buffer;
 	}
 
